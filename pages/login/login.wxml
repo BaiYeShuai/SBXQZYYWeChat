@@ -1,0 +1,73 @@
+<view class="container">
+  <!-- 顶部医疗Logo区域 -->
+  <view class="header">
+    <image src="/images/medical-logo.png" class="logo"></image>
+    <text class="title">医疗报告查询系统</text>
+    <text class="subtitle">请输入信息获取您的检查报告</text>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="input-group">
+    <!-- 身份证输入 -->
+    <view class="input-item">
+      <image src="/images/icon-idcard.png" class="input-icon"></image>
+      <input 
+        class="input-content" 
+        placeholder="请输入身份证号" 
+        placeholder-class="input-placeholder"
+        value="{{IdCard}}"
+        bindinput="inputIdCard"
+        maxlength="18"
+        type="text"
+      ></input>
+    </view>
+
+    <!-- 手机号输入 -->
+    <view class="input-item">
+      <image src="/images/icon-phone.png" class="input-icon"></image>
+      <input 
+        class="input-content" 
+        placeholder="请输入手机号" 
+        placeholder-class="input-placeholder"
+        value="{{PhoneNumber}}"
+        bindinput="inputPhone"
+        maxlength="11"
+        type="number"
+      ></input>
+    </view>
+
+    <!-- 验证码输入 -->
+    <view class="input-item">
+      <image src="/images/icon-code.png" class="input-icon"></image>
+      <input 
+        class="input-content" 
+        placeholder="请输入验证码" 
+        placeholder-class="input-placeholder"
+        value="{{Code}}"
+        bindinput="inputCode"
+        maxlength="6"
+        type="number"
+      ></input>
+      <view 
+        class="code-btn {{countdown > 0 ? 'code-btn-active' : ''}} {{codeDisabled ? 'btn-disabled' : ''}}"
+        bindtap="getCode"
+      >
+        {{codeText}}
+      </view>
+    </view>
+
+    <!-- 登录按钮 -->
+    <view 
+      class="btn-primary {{searchDisabled ? 'btn-disabled' : ''}}"
+      bindtap="searchReport"
+    >
+      查询报告
+    </view>
+  </view>
+
+  <!-- 安全提示 -->
+  <view class="security-tip">
+    <image src="/images/icon-lock.png" class="lock-icon"></image>
+    <text class="tip-text">数据加密传输，保护您的隐私安全</text>
+  </view>
+</view>

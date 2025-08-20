@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/reportList/reportList",
+    "pages/pdfViewer/pdfViewer"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1677ff",
+    "navigationBarTitleText": "医疗报告查询",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f7fa"
+  },
+  "networkTimeout": {
+    "request": 15000,
+    "downloadFile": 60000
+  }
+}

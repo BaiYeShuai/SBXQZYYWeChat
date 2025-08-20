@@ -1,0 +1,61 @@
+<view class="page-container">
+  <!-- 顶部导航 -->
+  <view class="nav-bar">
+    <view class="nav-title">报告详情</view>
+    <view class="nav-back" bindtap="goBack">
+      <image src="https://picsum.photos/id/5/36/36" class="back-icon" tint-color="white" alt="返回"></image>
+    </view>
+    <view class="nav-actions">
+      <view class="action-btn" bindtap="switchViewMode">
+        <text class="action-text">{{viewMode === 'online' ? '下载查看' : '在线预览'}}</text>
+      </view>
+      <view class="action-btn" bindtap="showMenu">
+        <image src="https://picsum.photos/id/8/36/36" class="menu-icon" tint-color="white" alt="菜单"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading && viewMode === 'online'}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在加载报告...</text>
+  </view>
+
+  <!-- 错误状态 -->
+  <view wx:if="{{error && viewMode === 'online'}}" class="error-container">
+    <image src="https://picsum.photos/id/7/160/160" class="error-img" alt="加载错误"></image>
+    <text class="error-text">{{errorMsg}}</text>
+    <view class="retry-btn" bindtap="reloadReport">重新加载</view>
+    <view class="switch-btn" bindtap="switchToDownloadView">
+      尝试下载后查看
+    </view>
+  </view>
+
+  <!-- 在线预览模式 -->
+  <web-view 
+    wx:if="{{!loading && !error && viewMode === 'online'}}" 
+    src="{{webViewUrl}}"
+    binderror="onWebViewError"
+    bindload="onWebViewLoad"
+  ></web-view>
+
+  <!-- 下载查看模式 -->
+  <view wx:if="{{viewMode === 'download'}}" class="download-view">
+    <view wx:if="{{!tempFilePath}}">
+      <view class="loading-container">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">正在下载报告...</text>
+      </view>
+    </view>
+    <view wx:elif="{{downloadError}}">
+      <view class="error-container">
+        <image src="https://picsum.photos/id/7/160/160" class="error-img" alt="下载错误"></image>
+        <text class="error-text">{{downloadErrorMsg}}</text>
+        <view class="retry-btn" bindtap="reloadReport">重新下载</view>
+        <view class="switch-btn" bindtap="switchToOnlineView">
+          尝试在线预览
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

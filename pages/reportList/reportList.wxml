@@ -1,0 +1,189 @@
+<view class="page-container">
+  <!-- 顶部导航 -->
+  <view class="nav-bar">
+    <view class="nav-title">我的报告列表</view>
+    <view class="nav-back" bindtap="goBack">
+      <image src="https://picsum.photos/id/5/36/36" class="back-icon" tint-color="white" alt="返回"></image>
+    </view>
+  </view>
+
+  <!-- 搜索和筛选区域 -->
+  <view class="search-filter-container">
+    <!-- 搜索框 -->
+    <view class="search-box">
+      <image src="https://picsum.photos/id/20/30/30" class="search-icon" alt="搜索"></image>
+      <input 
+        class="search-input" 
+        placeholder="搜索报告名称" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+      ></input>
+      <view 
+        class="clear-btn" 
+        wx:if="{{searchKeyword}}"
+        bindtap="clearSearch"
+      >
+        <image src="https://picsum.photos/id/21/20/20" class="clear-icon" alt="清除"></image>
+      </view>
+    </view>
+
+    <!-- 筛选条件 -->
+    <view class="filter-bar">
+      <view class="filter-item" bindtap="showTimeFilter">
+        <text>{{timeFilterText}}</text>
+        <image src="https://picsum.photos/id/22/20/20" class="filter-icon" alt="筛选"></image>
+      </view>
+      <view class="filter-item" bindtap="showTypeFilter">
+        <text>{{typeFilterText}}</text>
+        <image src="https://picsum.photos/id/22/20/20" class="filter-icon" alt="筛选"></image>
+      </view>
+      <view 
+        class="reset-filter" 
+        wx:if="{{isFilterApplied}}"
+        bindtap="resetFilters"
+      >
+        重置筛选
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading && !refreshing}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在加载报告...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{isEmpty && !loading}}" class="empty-container">
+    <image src="https://picsum.photos/id/6/200/200" class="empty-img" alt="暂无报告"></image>
+    <text class="empty-text">暂无报告记录</text>
+    <text class="empty-desc">请确认信息后重新查询</text>
+    <view class="btn-primary" bindtap="goBack">重新查询</view>
+  </view>
+
+  <!-- 搜索无结果状态 -->
+  <view wx:elif="{{!isEmpty && !loading && filteredReports.length === 0}}" class="empty-container">
+    <image src="https://picsum.photos/id/23/200/200" class="empty-img" alt="无搜索结果"></image>
+    <text class="empty-text">未找到相关报告</text>
+    <text class="empty-desc">请尝试其他搜索关键词</text>
+    <view class="btn-primary" bindtap="clearSearch">清除搜索</view>
+  </view>
+
+  <!-- 报告列表 -->
+  <view wx:else class="report-list">
+    <view 
+      class="list-item" 
+      wx:for="{{filteredReports}}" 
+      wx:key="Id" 
+      bindtap="viewReport" 
+      data-url="{{item.Url}}"
+      data-id="{{item.Id}}"
+    >
+      <view class="item-header">
+        <text class="item-title">{{item.Name}}</text>
+        <text class="item-tag">{{item.Status || '已完成'}}</text>
+      </view>
+      <view class="item-info">
+        <text class="info-time">生成时间：{{item.Time}}</text>
+        <text class="info-type" wx:if="{{item.Type}}">类型：{{item.Type}}</text>
+      </view>
+      <view class="item-arrow">
+        <image src="https://picsum.photos/id/24/30/30" class="arrow-icon" alt="查看详情"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- 下拉刷新提示 -->
+  <view wx:if="{{refreshing}}" class="refresh-tip">
+    <text>正在刷新最新报告...</text>
+  </view>
+
+  <!-- 时间筛选弹窗 -->
+  <view wx:if="{{showTimeFilterPopup}}" class="filter-popup-mask" bindtap="hideTimeFilter"></view>
+  <view wx:if="{{showTimeFilterPopup}}" class="filter-popup">
+    <view class="popup-title">选择时间范围</view>
+    <view class="filter-options">
+      <view 
+        class="filter-option {{timeFilter === 'all' ? 'selected' : ''}}" 
+        bindtap="selectTimeFilter" 
+        data-value="all"
+      >
+        全部时间
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'week' ? 'selected' : ''}}" 
+        bindtap="selectTimeFilter" 
+        data-value="week"
+      >
+        近一周
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'month' ? 'selected' : ''}}" 
+        bindtap="selectTimeFilter" 
+        data-value="month"
+      >
+        近一个月
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'quarter' ? 'selected' : ''}}" 
+        bindtap="selectTimeFilter" 
+        data-value="quarter"
+      >
+        近三个月
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'year' ? 'selected' : ''}}" 
+        bindtap="selectTimeFilter" 
+        data-value="year"
+      >
+        近一年
+      </view>
+    </view>
+    <view class="popup-confirm" bindtap="confirmTimeFilter">确定</view>
+  </view>
+
+  <!-- 类型筛选弹窗 -->
+  <view wx:if="{{showTypeFilterPopup}}" class="filter-popup-mask" bindtap="hideTypeFilter"></view>
+  <view wx:if="{{showTypeFilterPopup}}" class="filter-popup">
+    <view class="popup-title">选择报告类型</view>
+    <view class="filter-options">
+      <view 
+        class="filter-option {{typeFilter === 'all' ? 'selected' : ''}}" 
+        bindtap="selectTypeFilter" 
+        data-value="all"
+      >
+        全部类型
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'physical' ? 'selected' : ''}}" 
+        bindtap="selectTypeFilter" 
+        data-value="physical"
+      >
+        体检报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'test' ? 'selected' : ''}}" 
+        bindtap="selectTypeFilter" 
+        data-value="test"
+      >
+        检验报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'imaging' ? 'selected' : ''}}" 
+        bindtap="selectTypeFilter" 
+        data-value="imaging"
+      >
+        影像报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'consultation' ? 'selected' : ''}}" 
+        bindtap="selectTypeFilter" 
+        data-value="consultation"
+      >
+        会诊报告
+      </view>
+    </view>
+    <view class="popup-confirm" bindtap="confirmTypeFilter">确定</view>
+  </view>
+</view>
