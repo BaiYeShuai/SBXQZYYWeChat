@@ -1,37 +1,36 @@
-<view class="page-container">
-  <!-- 顶部导航 -->
-  <view class="nav-bar">
-    <view class="nav-title">报告详情</view>
-    <view class="nav-back" bindtap="goBack">
-      <image src="https://picsum.photos/id/5/36/36" class="back-icon" tint-color="white" alt="返回"></image>
-    </view>
-    <view class="nav-actions">
-      <view class="action-btn" bindtap="switchViewMode">
-        <text class="action-text">{{viewMode === 'online' ? '下载查看' : '在线预览'}}</text>
-      </view>
-      <view class="action-btn" bindtap="showMenu">
-        <image src="https://picsum.photos/id/8/36/36" class="menu-icon" tint-color="white" alt="菜单"></image>
-      </view>
-    </view>
+<view class="container">
+  <view class="header">
+    <button class="back-btn" bindtap="goBack">
+      <image src="/images/back.png" mode="widthFix"></image>
+    </button>
+    <text class="title">报告详情</text>
+    <button class="menu-btn" bindtap="showMenu">
+      <image src="/images/menu.png" mode="widthFix"></image>
+    </button>
   </view>
 
-  <!-- 加载状态 -->
-  <view wx:if="{{loading && viewMode === 'online'}}" class="loading-container">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">正在加载报告...</text>
+  <view class="view-mode-switch">
+    <button 
+      class="mode-btn {{viewMode === 'online' ? 'active' : ''}}" 
+      bindtap="switchToOnlineView"
+    >
+      在线预览
+    </button>
+    <button 
+      class="mode-btn {{viewMode === 'download' ? 'active' : ''}}" 
+      bindtap="switchToDownloadView"
+    >
+      下载查看
+    </button>
   </view>
 
-  <!-- 错误状态 -->
-  <view wx:if="{{error && viewMode === 'online'}}" class="error-container">
-    <image src="https://picsum.photos/id/7/160/160" class="error-img" alt="加载错误"></image>
-    <text class="error-text">{{errorMsg}}</text>
-    <view class="retry-btn" bindtap="reloadReport">重新加载</view>
-    <view class="switch-btn" bindtap="switchToDownloadView">
-      尝试下载后查看
-    </view>
+  <!-- 加载中 -->
+  <view wx:if="{{loading && viewMode === 'online'}}" class="loading">
+    <van-loading type="spinner" color="#1677ff" size="40rpx" />
+    <text>加载中...</text>
   </view>
 
-  <!-- 在线预览模式 -->
+  <!-- 在线预览 -->
   <web-view 
     wx:if="{{!loading && !error && viewMode === 'online'}}" 
     src="{{webViewUrl}}"
@@ -39,23 +38,30 @@
     bindload="onWebViewLoad"
   ></web-view>
 
-  <!-- 下载查看模式 -->
-  <view wx:if="{{viewMode === 'download'}}" class="download-view">
-    <view wx:if="{{!tempFilePath}}">
-      <view class="loading-container">
-        <view class="loading-spinner"></view>
-        <text class="loading-text">正在下载报告...</text>
-      </view>
+  <!-- 在线预览错误 -->
+  <view wx:if="{{error && viewMode === 'online'}}" class="error">
+    <image src="/images/error.png" mode="widthFix"></image>
+    <text>{{errorMsg}}</text>
+    <button bindtap="reloadReport">重新加载</button>
+  </view>
+
+  <!-- 下载查看区域 -->
+  <view wx:if="{{viewMode === 'download'}}">
+    <view wx:if="{{!downloadError && !tempFilePath}}" class="downloading">
+      <van-loading type="spinner" color="#1677ff" size="40rpx" />
+      <text>下载中...</text>
     </view>
-    <view wx:elif="{{downloadError}}">
-      <view class="error-container">
-        <image src="https://picsum.photos/id/7/160/160" class="error-img" alt="下载错误"></image>
-        <text class="error-text">{{downloadErrorMsg}}</text>
-        <view class="retry-btn" bindtap="reloadReport">重新下载</view>
-        <view class="switch-btn" bindtap="switchToOnlineView">
-          尝试在线预览
-        </view>
-      </view>
+
+    <view wx:if="{{downloadError}}" class="error">
+      <image src="/images/error.png" mode="widthFix"></image>
+      <text>{{downloadErrorMsg}}</text>
+      <button bindtap="reloadReport">重新下载</button>
+    </view>
+
+    <view wx:if="{{tempFilePath && !downloadError}}" class="download-success">
+      <image src="/images/success.png" mode="widthFix"></image>
+      <text>下载完成，请点击打开</text>
+      <button bindtap="openPdfFile" data-path="{{tempFilePath}}">打开报告</button>
     </view>
   </view>
 </view>

@@ -80,7 +80,7 @@ App({
   globalData: {
     isLogin: false,
     loginInfo: null,
-    baseApiUrl: 'http://192.168.0.38:10023/api', // 替换为你的API域名
+    baseApiUrl: 'http://localhost:10023/api', // 替换为你的API域名
     networkConnected: true,
     needRefreshReports: false // 标记是否需要刷新报告列表
   }
