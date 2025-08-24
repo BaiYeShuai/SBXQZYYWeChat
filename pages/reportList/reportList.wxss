@@ -1,54 +1,132 @@
-.container {
-  min-height: 100vh;
+/* pages/reportList/reportList.wxss */
+.report-list-container {
   background-color: #f5f5f5;
-  padding-bottom: 120rpx;
+  min-height: 100vh;
 }
 
-.header {
+/* 导航栏 */
+.navbar {
+  height: 100rpx;
+  background-color: #1677ff;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
+  justify-content: center;
+  position: relative;
+  padding-top: 20rpx;
+}
+
+.navbar .title {
+  color: #fff;
+  font-size: 36rpx;
+  font-weight: 500;
+}
+
+.logout-btn {
+  position: absolute;
+  right: 30rpx;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 10rpx 15rpx;
+  border-radius: 6rpx;
+  background-color: rgba(255,255,255,0.2);
+}
+
+/* 搜索区域 */
+.search-container {
+  padding: 20rpx 30rpx;
+  background-color: #f5f5f5;
+}
+
+/* 筛选栏 */
+.filter-bar {
+  display: flex;
+  padding: 0 30rpx;
   background-color: #fff;
+  height: 80rpx;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  color: #333;
+  font-size: 28rpx;
+  padding-right: 30rpx;
+  position: relative;
+}
+
+.filter-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 15rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 30rpx;
+  background-color: #eee;
+}
+
+.filter-icon {
+  width: 24rpx;
+  height: 24rpx;
+  margin-left: 8rpx;
+  transition: transform 0.3s;
+}
+
+.filter-reset {
+  color: #1677ff;
+  font-size: 26rpx;
+  margin-left: auto;
+  padding: 5rpx 15rpx;
+  border-radius: 15rpx;
+  background-color: rgba(22, 119, 255, 0.1);
+}
+
+/* 筛选弹窗 */
+.popup-title {
+  padding: 30rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-options {
+  padding: 20rpx 0;
+}
+
+.filter-option {
+  padding: 25rpx 30rpx;
+  font-size: 28rpx;
+  text-align: center;
   border-bottom: 1px solid #f5f5f5;
 }
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
+.filter-option.active {
+  color: #1677ff;
+  background-color: rgba(22, 119, 255, 0.05);
 }
 
-.user-btn {
-  width: 60rpx;
-  height: 60rpx;
-  padding: 0;
-  background: transparent;
+.popup-confirm {
+  margin: 20rpx 30rpx;
+  height: 90rpx;
+  background-color: #1677ff;
+  color: #fff;
+  border-radius: 15rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 32rpx;
 }
 
-.user-btn image {
-  width: 60rpx;
-  height: 60rpx;
+/* 报告列表 */
+.report-list {
+  padding: 20rpx 30rpx;
 }
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 200rpx 0;
-}
-
-.loading text {
-  margin-top: 20rpx;
-  font-size: 28rpx;
-  color: #666;
-}
-
-.error, .empty {
+/* 空状态 */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -56,39 +134,44 @@
   padding: 150rpx 0;
 }
 
-.error image, .empty image {
-  width: 160rpx;
-  height: 160rpx;
-  margin-bottom: 40rpx;
+.empty-img {
+  width: 180rpx;
+  height: 180rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.5;
 }
 
-.error text, .empty text {
+.empty-text {
   font-size: 28rpx;
-  color: #666;
+  color: #999;
   margin-bottom: 40rpx;
 }
 
-.error button {
-  width: 200rpx;
-  height: 70rpx;
-  line-height: 70rpx;
+.empty-btn {
+  width: 240rpx;
+  height: 80rpx;
   background-color: #1677ff;
   color: #fff;
   font-size: 28rpx;
-  border-radius: 35rpx;
-  padding: 0;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
 }
 
-.report-list {
-  padding: 20rpx 30rpx;
-}
-
+/* 报告项 */
 .report-item {
   background-color: #fff;
-  border-radius: 16rpx;
+  border-radius: 15rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.report-item:active {
+  transform: scale(0.99);
 }
 
 .report-header {
@@ -98,8 +181,8 @@
 }
 
 .report-title {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: 30rpx;
+  font-weight: 500;
   color: #333;
   max-width: 70%;
   overflow: hidden;
@@ -110,14 +193,50 @@
 .report-date {
   font-size: 24rpx;
   color: #999;
+  display: flex;
+  align-items: center;
+}
+
+.report-type {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25rpx;
+}
+
+.type-tag {
+  padding: 5rpx 15rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  margin-right: 20rpx;
+}
+
+.type-physical {
+  background-color: rgba(52, 199, 89, 0.1);
+  color: #34c759;
+}
+
+.type-test {
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}
+
+.type-imaging {
+  background-color: rgba(255, 149, 0, 0.1);
+  color: #ff9500;
+}
+
+.type-consultation {
+  background-color: rgba(153, 102, 255, 0.1);
+  color: #9966ff;
 }
 
 .report-hospital {
   font-size: 26rpx;
   color: #666;
-  margin-bottom: 20rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 1px solid #f5f5f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .report-footer {
@@ -131,7 +250,16 @@
   color: #1677ff;
 }
 
-.arrow {
+.report-arrow {
   width: 28rpx;
   height: 28rpx;
+  opacity: 0.5;
+}
+
+/* 刷新提示 */
+.refresh-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+  padding: 20rpx 0 40rpx;
 }

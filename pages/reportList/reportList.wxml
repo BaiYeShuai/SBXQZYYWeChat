@@ -1,44 +1,178 @@
-<view class="container">
-  <view class="header">
-    <text class="title">我的报告</text>
-    <button class="user-btn" bindtap="goToUserInfo">
-      <image src="/images/user-btn.png" mode="widthFix"></image>
-    </button>
+<!-- pages/reportList/reportList.wxml -->
+<view class="report-list-container">
+  <!-- 顶部导航 -->
+  <view class="navbar">
+    <view class="title">我的体检报告</view>
+    <view class="logout-btn" bindtap="logout">退出</view>
   </view>
 
-  <!-- 加载中 -->
-  <view wx:if="{{loading}}" class="loading">
-    <van-loading type="spinner" color="#1677ff" size="40rpx" />
-    <text>加载中...</text>
+  <!-- 搜索区域 -->
+  <view class="search-container">
+    <view class="search-box">
+      <image src="/images/icon_search.png" class="search-icon"></image>
+      <input 
+        class="search-input"
+        value="{{searchKeyword}}"
+        placeholder="搜索报告名称..."
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+      />
+      <view class="clear-btn" bindtap="clearSearch" wx:if="{{searchKeyword}}">
+        <image src="/images/icon_clear.png" class="clear-icon"></image>
+      </view>
+    </view>
   </view>
 
-  <!-- 错误状态 -->
-  <view wx:elif="{{error}}" class="error">
-    <image src="/images/error.png" mode="widthFix"></image>
-    <text>{{errorMsg}}</text>
-    <button bindtap="refreshReports">重新加载</button>
+  <!-- 筛选区域 -->
+  <view class="filter-bar">
+    <view class="filter-item" bindtap="showTimeFilter">
+      <text>{{timeFilterText}}</text>
+      <image src="/images/icon_arrow_down.png" class="filter-icon"></image>
+    </view>
+    <view class="filter-item" bindtap="showTypeFilter">
+      <text>{{typeFilterText}}</text>
+      <image src="/images/icon_arrow_down.png" class="filter-icon"></image>
+    </view>
+    <view 
+      class="filter-reset" 
+      bindtap="resetFilters"
+      wx:if="{{isFilterApplied}}"
+    >
+      重置筛选
+    </view>
   </view>
 
-  <!-- 空状态 -->
-  <view wx:elif="{{empty}}" class="empty">
-    <image src="/images/empty.png" mode="widthFix"></image>
-    <text>暂无报告数据</text>
+  <!-- 时间筛选弹窗 -->
+  <view class="popup-mask" wx:if="{{showTimeFilterPopup}}" bindtap="hideTimeFilter"></view>
+  <view class="popup" wx:if="{{showTimeFilterPopup}}">
+    <view class="popup-title">选择时间范围</view>
+    <view class="filter-options">
+      <view 
+        class="filter-option {{timeFilter === 'all' ? 'active' : ''}}"
+        bindtap="selectTimeFilter"
+        data-value="all"
+      >
+        全部时间
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'week' ? 'active' : ''}}"
+        bindtap="selectTimeFilter"
+        data-value="week"
+      >
+        近一周
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'month' ? 'active' : ''}}"
+        bindtap="selectTimeFilter"
+        data-value="month"
+      >
+        近一个月
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'quarter' ? 'active' : ''}}"
+        bindtap="selectTimeFilter"
+        data-value="quarter"
+      >
+        近三个月
+      </view>
+      <view 
+        class="filter-option {{timeFilter === 'year' ? 'active' : ''}}"
+        bindtap="selectTimeFilter"
+        data-value="year"
+      >
+        近一年
+      </view>
+    </view>
+    <view class="popup-confirm" bindtap="confirmTimeFilter">确认</view>
+  </view>
+
+  <!-- 类型筛选弹窗 -->
+  <view class="popup-mask" wx:if="{{showTypeFilterPopup}}" bindtap="hideTypeFilter"></view>
+  <view class="popup" wx:if="{{showTypeFilterPopup}}">
+    <view class="popup-title">选择报告类型</view>
+    <view class="filter-options">
+      <view 
+        class="filter-option {{typeFilter === 'all' ? 'active' : ''}}"
+        bindtap="selectTypeFilter"
+        data-value="all"
+      >
+        全部类型
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'physical' ? 'active' : ''}}"
+        bindtap="selectTypeFilter"
+        data-value="physical"
+      >
+        体检报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'test' ? 'active' : ''}}"
+        bindtap="selectTypeFilter"
+        data-value="test"
+      >
+        检验报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'imaging' ? 'active' : ''}}"
+        bindtap="selectTypeFilter"
+        data-value="imaging"
+      >
+        影像报告
+      </view>
+      <view 
+        class="filter-option {{typeFilter === 'consultation' ? 'active' : ''}}"
+        bindtap="selectTypeFilter"
+        data-value="consultation"
+      >
+        会诊报告
+      </view>
+    </view>
+    <view class="popup-confirm" bindtap="confirmTypeFilter">确认</view>
   </view>
 
   <!-- 报告列表 -->
-  <view wx:else class="report-list">
-    <view class="report-item" wx:for="{{reports}}" wx:key="id" bindtap="viewReport" data-report="{{item}}">
+  <view class="report-list">
+    <!-- 加载状态 -->
+    <view class="loading-container" wx:if="{{loading && filteredReports.length === 0}}">
+      <view class="custom-loading"></view>
+      <text class="loading-text">加载报告中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && isEmpty}}">
+      <image src="/images/icon_empty.png" class="empty-img"></image>
+      <text class="empty-text">暂无体检报告记录</text>
+      <button class="empty-btn" bindtap="goBack">重新查询</button>
+    </view>
+
+    <!-- 报告项 -->
+    <view 
+      class="report-item" 
+      wx:for="{{filteredReports}}" 
+      wx:key="id"
+      bindtap="viewReport"
+      data-url="{{item.Url}}"
+      data-id="{{item.Id}}"
+    >
       <view class="report-header">
-        <text class="report-title">{{item.Name}}</text>
-<text class="report-date">{{item.Time}}</text>
+        <view class="report-title">{{item.Name || item.name}}</view>
+        <view class="report-date">{{item.Time || item.time}}</view>
       </view>
-      <view class="report-hospital">
-        <text>检测机构：未知机构</text> <!-- 后端数据没有提供医院信息 -->
+      <view class="report-type">
+        <view class="type-tag {{item.Type === 'physical' ? 'type-physical' : item.Type === 'test' ? 'type-test' : item.Type === 'imaging' ? 'type-imaging' : 'type-consultation'}}">
+          {{item.Type === 'physical' ? '体检报告' : item.Type === 'test' ? '检验报告' : item.Type === 'imaging' ? '影像报告' : '会诊报告'}}
+        </view>
+        <view class="report-hospital">{{item.Hospital || '未知医院'}}</view>
       </view>
       <view class="report-footer">
-        <text class="report-status">已完成</text> <!-- 后端数据没有提供状态信息 -->
-        <image src="/images/arrow-right.png" mode="widthFix" class="arrow"></image>
+        <text class="report-status">已完成</text>
+        <image src="/images/icon_arrow_right.png" class="report-arrow"></image>
       </view>
     </view>
+  </view>
+
+  <!-- 下拉刷新提示 -->
+  <view class="refresh-tip" wx:if="{{!loading && filteredReports.length > 0}}">
+    下拉可刷新报告列表
   </view>
 </view>

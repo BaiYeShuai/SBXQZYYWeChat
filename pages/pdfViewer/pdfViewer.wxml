@@ -1,67 +1,39 @@
+<!-- pages/pdfViewer/pdfViewer.wxml -->
 <view class="container">
-  <view class="header">
-    <button class="back-btn" bindtap="goBack">
-      <image src="/images/back.png" mode="widthFix"></image>
-    </button>
-    <text class="title">报告详情</text>
-    <button class="menu-btn" bindtap="showMenu">
-      <image src="/images/menu.png" mode="widthFix"></image>
-    </button>
+  <!-- 仅保留一层导航栏（解决标题重复问题） -->
+  <view class="navbar">
+    <view class="back-btn" bindtap="goBack">
+      <text class="back-icon">←</text>
+    </view>
+    <view class="navbar-title">报告详情</view>
+    <view class="menu-btn" bindtap="showMenu">
+      <text class="menu-icon">...</text>
+    </view>
   </view>
 
-  <view class="view-mode-switch">
-    <button 
-      class="mode-btn {{viewMode === 'online' ? 'active' : ''}}" 
-      bindtap="switchToOnlineView"
-    >
-      在线预览
-    </button>
-    <button 
-      class="mode-btn {{viewMode === 'download' ? 'active' : ''}}" 
-      bindtap="switchToDownloadView"
-    >
-      下载查看
-    </button>
-  </view>
-
-  <!-- 加载中 -->
-  <view wx:if="{{loading && viewMode === 'online'}}" class="loading">
-    <van-loading type="spinner" color="#1677ff" size="40rpx" />
-    <text>加载中...</text>
-  </view>
-
-  <!-- 在线预览 -->
-  <web-view 
-    wx:if="{{!loading && !error && viewMode === 'online'}}" 
-    src="{{webViewUrl}}"
-    binderror="onWebViewError"
-    bindload="onWebViewLoad"
-  ></web-view>
-
-  <!-- 在线预览错误 -->
-  <view wx:if="{{error && viewMode === 'online'}}" class="error">
-    <image src="/images/error.png" mode="widthFix"></image>
-    <text>{{errorMsg}}</text>
-    <button bindtap="reloadReport">重新加载</button>
-  </view>
-
-  <!-- 下载查看区域 -->
-  <view wx:if="{{viewMode === 'download'}}">
-    <view wx:if="{{!downloadError && !tempFilePath}}" class="downloading">
-      <van-loading type="spinner" color="#1677ff" size="40rpx" />
-      <text>下载中...</text>
+  <!-- 内容区域（占满剩余屏幕，解决空白问题） -->
+  <view class="content">
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading && !showProgress && !error}}">
+      <view class="spinner"></view>
+      <text class="loading-text">正在加载报告...</text>
     </view>
 
-    <view wx:if="{{downloadError}}" class="error">
-      <image src="/images/error.png" mode="widthFix"></image>
-      <text>{{downloadErrorMsg}}</text>
-      <button bindtap="reloadReport">重新下载</button>
+    <!-- 下载进度 -->
+    <view class="progress-state" wx:if="{{showProgress && !error}}">
+      <text class="progress-text">加载进度：{{progress || 0}}%</text>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progress || 0}}%"></view>
+      </view>
+      <text class="progress-hint">请稍候，报告加载中...</text>
     </view>
 
-    <view wx:if="{{tempFilePath && !downloadError}}" class="download-success">
-      <image src="/images/success.png" mode="widthFix"></image>
-      <text>下载完成，请点击打开</text>
-      <button bindtap="openPdfFile" data-path="{{tempFilePath}}">打开报告</button>
+    <!-- 错误状态 -->
+    <view class="error-state" wx:if="{{error}}">
+      <view class="error-icon">!</view>
+      <text class="error-text">{{errorMsg || '加载失败，请重试'}}</text>
+      <button class="retry-btn" bindtap="reloadReport">重新加载</button>
     </view>
   </view>
 </view>
+    

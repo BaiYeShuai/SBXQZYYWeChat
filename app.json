@@ -5,13 +5,11 @@
     "pages/pdfViewer/pdfViewer"
   ],
   "window": {
+    "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#1677ff",
-    "navigationBarTitleText": "医疗报告查询",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f7fa"
+    "navigationBarTitleText": "体检报告查询",
+    "navigationBarTextStyle": "white"
   },
-  "networkTimeout": {
-    "request": 15000,
-    "downloadFile": 60000
-  }
+  "sitemapLocation": "sitemap.json"
 }
+    

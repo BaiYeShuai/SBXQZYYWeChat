@@ -1,12 +1,14 @@
+// pages/reportList/reportList.js
 const app = getApp();
 
 Page({
   data: {
-    // 报告数据（仅从登录页获取）
+    // 报告数据
     reports: [],
     filteredReports: [],
     isEmpty: false,
-    loading: true,  // 仅用于初始加载状态
+    loading: true,
+    refreshing: false,
     
     // 搜索和筛选
     searchKeyword: '',
@@ -18,10 +20,7 @@ Page({
     
     // 筛选弹窗状态
     showTimeFilterPopup: false,
-    showTypeFilterPopup: false,
-    
-    // 报告类型列表（从数据中提取）
-    availableTypes: []
+    showTypeFilterPopup: false
   },
 
   onLoad() {
@@ -31,51 +30,124 @@ Page({
       return;
     }
 
-    // 接收登录页传递的报告数据（唯一数据来源）
+    // 接收初始报告数据
     const eventChannel = this.getOpenerEventChannel();
-    if (eventChannel) {
-      eventChannel.on('acceptReports', (data) => {
-        const reports = data.reports || [];
-        this.processReports(reports);
-      });
-    } else {
-      // 如果没有从登录页获取到数据，显示空状态
-      this.setData({
-        reports: [],
-        loading: false,
-        isEmpty: true
-      });
-      wx.showToast({ title: '未获取到报告数据', icon: 'none' });
+    eventChannel.on('acceptReports', (data) => {
+      const reports = data.reports || [];
+      this.processReports(reports);
+    });
+
+    // 监听全局刷新事件
+    this.watchRefreshEvent();
+  },
+
+  onShow() {
+    // 如果需要刷新，重新加载数据
+    if (app.globalData.needRefreshReports) {
+      this.refreshReports();
+      app.globalData.needRefreshReports = false;
     }
   },
 
-  // 处理报告数据（仅来自登录页）
-  processReports(reports) {
-    // 过滤并处理有效报告地址
-    const validReports = reports.filter(item => {
-      if (!item.Url) return false;
-      // 补全协议头
-      if (!item.Url.startsWith('http://') && !item.Url.startsWith('https://')) {
-        item.Url = 'https://' + item.Url;
+  // 监听全局刷新事件
+  watchRefreshEvent() {
+    const that = this;
+    wx.onAppShow(() => {
+      if (app.globalData.needRefreshReports) {
+        that.refreshReports();
+        app.globalData.needRefreshReports = false;
       }
-      return true;
+    });
+  },
+
+  // 处理报告数据 - 修复可能的字段名不匹配问题
+  processReports(reports) {
+    // 过滤有效报告（带HTTP/HTTPS地址）
+    // 同时处理可能的字段名大小写问题
+    const validReports = reports.filter(item => {
+      // 尝试多种可能的URL字段名
+      const url = item.Url || item.url || item.reportUrl || '';
+      return url && (url.startsWith('http://') || url.startsWith('https://'));
+    }).map(item => {
+      // 统一URL字段为Url，确保前端使用一致
+      return {
+        ...item,
+        Url: item.Url || item.url || item.reportUrl || '',
+        // 格式化日期显示
+        Time: this.formatDate(item.Time || item.time)
+      };
     });
 
     // 按时间排序（最新的在前）
     validReports.sort((a, b) => {
-      return new Date(b.Time || '').getTime() - new Date(a.Time || '').getTime();
+      return new Date(b.Time || b.time).getTime() - new Date(a.Time || a.time).getTime();
     });
-
-    // 提取可用的报告类型（用于筛选）
-    const availableTypes = [...new Set(validReports.map(item => item.Type).filter(Boolean))];
 
     this.setData({
       reports: validReports,
-      availableTypes,
-      loading: false,
-      isEmpty: validReports.length === 0
+      loading: false
     }, () => {
+      // 应用筛选条件
       this.applyFilters();
+    });
+  },
+
+  // 格式化日期
+  formatDate(dateStr) {
+    if (!dateStr) return '';
+    
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  },
+
+  // 刷新报告列表
+  refreshReports() {
+    if (!app.globalData.networkConnected) {
+      wx.showToast({ title: '网络未连接，无法刷新', icon: 'none' });
+      if (this.data.refreshing) {
+        wx.stopPullDownRefresh();
+        this.setData({ refreshing: false });
+      }
+      return;
+    }
+
+    // 显示刷新状态
+    this.setData({ 
+      refreshing: true,
+      loading: true 
+    });
+
+    // 从接口获取最新报告
+    wx.request({
+      url: `${app.globalData.baseApiUrl}/reports/latest`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${app.globalData.loginInfo.token}`
+      },
+      success: (res) => {
+        if (res.data && res.data.Success) {
+          this.processReports(res.data.Data || []);
+          wx.showToast({ title: '刷新成功', icon: 'none' });
+        } else {
+          app.handleError(res.data || {}, '刷新失败');
+        }
+      },
+      fail: (err) => {
+        app.handleError(err, '刷新失败');
+      },
+      complete: () => {
+        this.setData({ 
+          refreshing: false,
+          loading: false 
+        });
+        wx.stopPullDownRefresh();
+      }
     });
   },
 
@@ -88,30 +160,40 @@ Page({
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
       result = result.filter(item => 
-        (item.Name || '').toLowerCase().includes(keyword)
+        (item.Name || item.name || '').toLowerCase().includes(keyword) ||
+        (item.Hospital || '').toLowerCase().includes(keyword)
       );
     }
 
     // 时间筛选
     if (timeFilter !== 'all') {
       const now = new Date();
-      const daysMap = {
-        'week': 7,
-        'month': 30,
-        'quarter': 90,
-        'year': 365
-      };
-      const startTime = new Date(now.getTime() - daysMap[timeFilter] * 24 * 60 * 60 * 1000);
-      
+      let startTime;
+
+      switch (timeFilter) {
+        case 'week':
+          startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case 'quarter':
+          startTime = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case 'year':
+          startTime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          break;
+      }
+
       result = result.filter(item => {
-        if (!item.Time) return false;
-        return new Date(item.Time) >= startTime;
+        const reportTime = new Date(item.Time || item.time);
+        return reportTime >= startTime;
       });
     }
 
     // 类型筛选
     if (typeFilter !== 'all') {
-      result = result.filter(item => item.Type === typeFilter);
+      result = result.filter(item => (item.Type || item.type) === typeFilter);
     }
 
     // 更新筛选状态
@@ -119,17 +201,22 @@ Page({
     
     this.setData({
       filteredReports: result,
-      isEmpty: result.length === 0 && reports.length > 0,
+      isEmpty: reports.length === 0,
       isFilterApplied
     });
   },
 
-  // 搜索输入处理
+  // 搜索输入
   onSearchInput(e) {
     const keyword = e.detail.value.trim();
     this.setData({ searchKeyword: keyword }, () => {
       this.applyFilters();
     });
+  },
+
+  // 搜索确认
+  onSearchConfirm() {
+    this.applyFilters();
   },
 
   // 清除搜索
@@ -139,19 +226,23 @@ Page({
     });
   },
 
-  // 时间筛选相关方法
+  // 显示时间筛选
   showTimeFilter() {
     this.setData({ showTimeFilterPopup: true });
   },
 
+  // 隐藏时间筛选
   hideTimeFilter() {
     this.setData({ showTimeFilterPopup: false });
   },
 
+  // 选择时间筛选
   selectTimeFilter(e) {
-    this.setData({ timeFilter: e.currentTarget.dataset.value });
+    const value = e.currentTarget.dataset.value;
+    this.setData({ timeFilter: value });
   },
 
+  // 确认时间筛选
   confirmTimeFilter() {
     const textMap = {
       'all': '时间筛选',
@@ -160,6 +251,7 @@ Page({
       'quarter': '近三个月',
       'year': '近一年'
     };
+
     this.setData({
       timeFilterText: textMap[this.data.timeFilter],
       showTimeFilterPopup: false
@@ -168,37 +260,34 @@ Page({
     });
   },
 
-  // 类型筛选相关方法
+  // 显示类型筛选
   showTypeFilter() {
     this.setData({ showTypeFilterPopup: true });
   },
 
+  // 隐藏类型筛选
   hideTypeFilter() {
     this.setData({ showTypeFilterPopup: false });
   },
 
+  // 选择类型筛选
   selectTypeFilter(e) {
-    this.setData({ typeFilter: e.currentTarget.dataset.value });
+    const value = e.currentTarget.dataset.value;
+    this.setData({ typeFilter: value });
   },
 
+  // 确认类型筛选
   confirmTypeFilter() {
-    const baseTextMap = {
+    const textMap = {
       'all': '类型筛选',
       'physical': '体检报告',
       'test': '检验报告',
       'imaging': '影像报告',
       'consultation': '会诊报告'
     };
-    
-    // 动态添加数据中的类型
-    this.data.availableTypes.forEach(type => {
-      if (!baseTextMap[type]) {
-        baseTextMap[type] = type.charAt(0).toUpperCase() + type.slice(1);
-      }
-    });
 
     this.setData({
-      typeFilterText: baseTextMap[this.data.typeFilter],
+      typeFilterText: textMap[this.data.typeFilter],
       showTypeFilterPopup: false
     }, () => {
       this.applyFilters();
@@ -218,49 +307,71 @@ Page({
     });
   },
 
-  // 查看报告详情
+  // 查看报告详情 - 修复地址无效问题
   viewReport(e) {
-    const { url, id, name } = e.currentTarget.dataset;
+    // 获取报告数据
+    const { url, id } = e.currentTarget.dataset;
     
-    if (!url) {
-      wx.showToast({ title: '报告地址无效', icon: 'none' });
+    // 增强的URL验证
+    if (!url || !(url.startsWith('http://') || url.startsWith('https://'))) {
+      wx.showToast({ 
+        title: '报告地址无效', 
+        icon: 'none',
+        duration: 2000
+      });
+      console.error('无效的报告URL:', url);
       return;
     }
 
     try {
-      // 处理地址确保正确性
-      let processedUrl = url;
-      if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
-        processedUrl = 'https://' + processedUrl;
-      }
-      
-      const encodedUrl = encodeURIComponent(processedUrl);
-      const encodedName = encodeURIComponent(name || '体检报告');
-      
+      // 确保URL正确编码
+      const encodedUrl = encodeURIComponent(url);
       wx.navigateTo({
-        url: `/pages/pdfViewer/pdfViewer?url=${encodedUrl}&id=${id}&name=${encodedName}`,
-        fail: (err) => {
-          console.error('跳转PDF查看器失败:', err);
-          wx.showToast({ title: '打开报告失败', icon: 'none' });
-        }
+        url: `/pages/pdfViewer/pdfViewer?url=${encodedUrl}&id=${id}`
       });
-    } catch (e) {
-      console.error('地址处理失败:', e);
-      wx.showToast({ title: '报告地址格式错误', icon: 'none' });
+    } catch (err) {
+      console.error('URL编码失败:', err);
+      wx.showToast({ 
+        title: '处理报告地址失败', 
+        icon: 'none',
+        duration: 2000
+      });
     }
   },
 
-  // 返回登录页
+  // 返回登录页重新查询
   goBack() {
-    wx.navigateBack({ delta: 1 });
+    wx.navigateTo({ url: '/pages/login/login' });
   },
 
-  // 页面卸载时清理
+  // 退出登录
+  logout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '确定要退出登录吗？',
+      confirmText: '退出',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除登录信息
+          app.globalData.isLogin = false;
+          app.globalData.loginInfo = null;
+          wx.removeStorageSync('loginInfo');
+          
+          // 跳转到登录页
+          wx.redirectTo({ url: '/pages/login/login' });
+        }
+      }
+    });
+  },
+
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.refreshReports();
+  },
+
+  // 页面卸载时移除事件监听
   onUnload() {
-    // 移除可能的事件监听
-    const eventChannel = this.getOpenerEventChannel();
-    if (eventChannel) {
-      eventChannel.off('acceptReports');
-    }
+    wx.offAppShow();
   }
 });

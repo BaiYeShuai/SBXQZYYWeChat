@@ -1,113 +1,141 @@
-.container {
+/* pages/pdfViewer/pdfViewer.wxss */
+.pdf-viewer-container {
   width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
   background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.header {
+/* 顶部导航 */
+.navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20rpx 30rpx;
-  background-color: #fff;
-  border-bottom: 1px solid #f5f5f5;
+  justify-content: space-between;
+  height: 100rpx;
+  background-color: #1677ff;
+  padding: 0 30rpx;
+  color: white;
 }
 
 .back-btn, .menu-btn {
-  width: 60rpx;
-  height: 60rpx;
-  padding: 0;
-  background: transparent;
+  width: 80rpx;
+  height: 100rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  justify-content: center;
 }
 
-.back-btn image, .menu-btn image {
-  width: 36rpx;
-  height: 36rpx;
+.back-text, .menu-text {
+  color: white;
+  font-size: 36rpx;
+  font-weight: bold;
 }
 
 .title {
   font-size: 32rpx;
-  color: #333;
-  font-weight: bold;
+  font-weight: 500;
 }
 
-.view-mode-switch {
-  display: flex;
-  background-color: #fff;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.mode-btn {
-  flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
-  background: transparent;
-  font-size: 28rpx;
-  color: #666;
-  padding: 0;
-  position: relative;
-}
-
-.mode-btn.active {
-  color: #1677ff;
-}
-
-.mode-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 4rpx;
-  background-color: #1677ff;
-}
-
-web-view {
-  flex: 1;
-  width: 100%;
-}
-
-.loading, .error, .downloading, .download-success {
-  flex: 1;
+/* 加载状态 */
+.loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 200rpx 0;
+  padding: 100rpx 0;
 }
 
-.loading text, .downloading text, .download-success text {
-  margin-top: 20rpx;
+.custom-loading {
+  width: 50rpx;
+  height: 50rpx;
+  border: 5rpx solid #eee;
+  border-top-color: #1677ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 30rpx;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading text {
   font-size: 28rpx;
   color: #666;
 }
 
-.error image, .download-success image {
-  width: 160rpx;
-  height: 160rpx;
-  margin-bottom: 40rpx;
+/* 进度条样式（关键新增） */
+.progress-container {
+  padding: 150rpx 30rpx 0;
 }
 
-.error text {
+.progress-text {
+  display: block;
+  text-align: center;
   font-size: 28rpx;
   color: #666;
-  margin-bottom: 40rpx;
+  margin-bottom: 20rpx;
 }
 
-.error button, .download-success button {
-  width: 200rpx;
-  height: 70rpx;
-  line-height: 70rpx;
+.progress-bar {
+  height: 12rpx;
+  background-color: #eee;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
   background-color: #1677ff;
-  color: #fff;
+  transition: width 0.3s ease;
+}
+
+.progress-hint {
+  display: block;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 15rpx;
+}
+
+/* 错误状态 */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 30rpx;
+  text-align: center;
+}
+
+.error-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #ff4d4f;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+}
+
+.error-msg {
   font-size: 28rpx;
-  border-radius: 35rpx;
-  padding: 0;
-  margin-top: 20rpx;
+  color: #666;
+  margin-bottom: 40rpx;
+  line-height: 1.5;
+}
+
+.retry-btn {
+  width: 240rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  background-color: #1677ff;
+  color: white;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 28rpx;
 }
