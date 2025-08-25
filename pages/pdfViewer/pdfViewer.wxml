@@ -23,7 +23,7 @@
     <view class="progress-state" wx:if="{{showProgress && !error}}">
       <text class="progress-text">加载进度：{{progress || 0}}%</text>
       <view class="progress-bar">
-        <view class="progress-fill" style="width: {{progress || 0}}%"></view>
+        <view class="progress-fill" style="width: {{progress || 0}}"></view>
       </view>
       <text class="progress-hint">请稍候，报告加载中...</text>
     </view>

@@ -23,15 +23,11 @@
     </view>
   </view>
 
-  <!-- 筛选区域 -->
+  <!-- 筛选区域（仅保留时间筛选） -->
   <view class="filter-bar">
     <view class="filter-item" bindtap="showTimeFilter">
       <text>{{timeFilterText}}</text>
-      <image src="/images/icon_arrow_down.png" class="filter-icon"></image>
-    </view>
-    <view class="filter-item" bindtap="showTypeFilter">
-      <text>{{typeFilterText}}</text>
-      <image src="/images/icon_arrow_down.png" class="filter-icon"></image>
+      <image src="/images/icon_arrow_down.png" class="filter-icon {{showTimeFilterPopup ? 'active' : ''}}"></image>
     </view>
     <view 
       class="filter-reset" 
@@ -44,7 +40,7 @@
 
   <!-- 时间筛选弹窗 -->
   <view class="popup-mask" wx:if="{{showTimeFilterPopup}}" bindtap="hideTimeFilter"></view>
-  <view class="popup" wx:if="{{showTimeFilterPopup}}">
+  <view class="popup slide-up" wx:if="{{showTimeFilterPopup}}">
     <view class="popup-title">选择时间范围</view>
     <view class="filter-options">
       <view 
@@ -84,50 +80,6 @@
       </view>
     </view>
     <view class="popup-confirm" bindtap="confirmTimeFilter">确认</view>
-  </view>
-
-  <!-- 类型筛选弹窗 -->
-  <view class="popup-mask" wx:if="{{showTypeFilterPopup}}" bindtap="hideTypeFilter"></view>
-  <view class="popup" wx:if="{{showTypeFilterPopup}}">
-    <view class="popup-title">选择报告类型</view>
-    <view class="filter-options">
-      <view 
-        class="filter-option {{typeFilter === 'all' ? 'active' : ''}}"
-        bindtap="selectTypeFilter"
-        data-value="all"
-      >
-        全部类型
-      </view>
-      <view 
-        class="filter-option {{typeFilter === 'physical' ? 'active' : ''}}"
-        bindtap="selectTypeFilter"
-        data-value="physical"
-      >
-        体检报告
-      </view>
-      <view 
-        class="filter-option {{typeFilter === 'test' ? 'active' : ''}}"
-        bindtap="selectTypeFilter"
-        data-value="test"
-      >
-        检验报告
-      </view>
-      <view 
-        class="filter-option {{typeFilter === 'imaging' ? 'active' : ''}}"
-        bindtap="selectTypeFilter"
-        data-value="imaging"
-      >
-        影像报告
-      </view>
-      <view 
-        class="filter-option {{typeFilter === 'consultation' ? 'active' : ''}}"
-        bindtap="selectTypeFilter"
-        data-value="consultation"
-      >
-        会诊报告
-      </view>
-    </view>
-    <view class="popup-confirm" bindtap="confirmTypeFilter">确认</view>
   </view>
 
   <!-- 报告列表 -->
@@ -176,3 +128,4 @@
     下拉可刷新报告列表
   </view>
 </view>
+    

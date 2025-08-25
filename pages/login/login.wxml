@@ -1,4 +1,6 @@
-<!-- pages/login/login.wxml -->
+<!-- 顶部装饰条 -->
+<view class="top-decoration"></view>
+
 <view class="login-container">
   <view class="login-header">
     <image src="/images/logo.png" class="logo"></image>
@@ -10,49 +12,31 @@
     <!-- 身份证号 -->
     <view class="input-item">
       <text class="input-label">身份证号</text>
-      <input 
-        class="input-field" 
-        placeholder="请输入18位身份证号" 
-        data-field="idCard"
-        value="{{idCard}}"
-        bindinput="onInputChange"
-        maxlength="18"
-      />
+      <view class="input-wrapper">
+        <image src="/images/icon_idcard.png" class="input-icon"></image>
+        <input class="input-field" placeholder="请输入18位身份证号" data-field="idCard" value="{{idCard}}" bindinput="onInputChange" maxlength="18" />
+      </view>
     </view>
 
     <!-- 手机号 -->
     <view class="input-item">
       <text class="input-label">手机号</text>
-      <input 
-        class="input-field" 
-        placeholder="请输入手机号" 
-        data-field="phoneNumber"
-        value="{{phoneNumber}}"
-        bindinput="onInputChange"
-        type="number"
-        maxlength="11"
-      />
+      <view class="input-wrapper">
+        <image src="/images/icon_phone.png" class="input-icon"></image>
+        <input class="input-field" placeholder="请输入手机号" data-field="phoneNumber" value="{{phoneNumber}}" bindinput="onInputChange" type="number" maxlength="11" />
+      </view>
     </view>
 
     <!-- 验证码 -->
     <view class="input-item verify-code">
       <view class="code-input">
         <text class="input-label">验证码</text>
-        <input 
-          class="input-field" 
-          placeholder="请输入6位验证码" 
-          data-field="verifyCode"
-          value="{{verifyCode}}"
-          bindinput="onInputChange"
-          type="number"
-          maxlength="6"
-        />
+        <view class="input-wrapper">
+          <image src="/images/icon_code.png" class="input-icon"></image>
+          <input class="input-field" placeholder="请输入6位验证码" data-field="verifyCode" value="{{verifyCode}}" bindinput="onInputChange" type="number" maxlength="6" />
+        </view>
       </view>
-      <button 
-        class="get-code-btn" 
-        bindtap="getVerifyCode"
-        disabled="{{!canGetCode || isCodeLoading}}"
-      >
+      <button class="get-code-btn" bindtap="getVerifyCode" disabled="{{!canGetCode || isCodeLoading}}">
         {{codeText}}
       </button>
     </view>
@@ -60,14 +44,25 @@
     <!-- 错误提示 -->
     <text class="login-tips">{{errorTips}}</text>
 
-    <!-- 登录按钮 -->
-    <button 
-      class="login-btn" 
-      bindtap="login"
-      disabled="{{!canLogin || isLoading}}"
-    >
-      登录查询
-    </button>
+    <!-- 登录按钮（调整为整体居中） -->
+    <view class="login-btn-container">
+      <button class="login-btn" bindtap="login" disabled="{{!canLogin || isLoading}}">
+        <text class="btn-text">登录查询</text>
+      </button>
+    </view>
+
+    <!-- 温馨提示区域 -->
+    <view class="warm-tips">
+      <view class="tips-title">温馨提示：</view>
+      <view class="tips-content">
+        <view class="tips-item">1、体检报告完成时间：体检结束后10个工作日（节假日除外)。</view>
+        <view class="tips-item">2、请您在上方的查询区域中，先输入您的身份证号，再点击查询（放大镜）进行查询。</view>
+        <view class="tips-item">3、在遇到输入的查询信息有误或体检报告暂时未发布时，系统会自动弹出提示信息。</view>
+        <view class="tips-item">4、在阅读体检报告内容时，请您首先观看体检报告中的阅读说明，其中有对影响体检结果因素和对异常指标解读的内容。</view>
+        <view class="tips-item">5、若您对查询结果或体检报告内容有疑问，请拨打下方的医院联系电话进行咨询。</view>
+        <view class="tips-item important">6、*请认准官方指定电话024-89863828/024-89605380*</view>
+      </view>
+    </view>
   </view>
 
   <view class="login-footer">
@@ -81,4 +76,3 @@
     <text wx:if="{{isCodeLoading}}">发送验证码中...</text>
   </view>
 </view>
-    
