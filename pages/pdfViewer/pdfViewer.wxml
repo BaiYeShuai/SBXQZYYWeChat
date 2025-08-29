@@ -1,6 +1,5 @@
-<!-- pages/pdfViewer/pdfViewer.wxml -->
 <view class="container">
-  <!-- 仅保留一层导航栏（解决标题重复问题） -->
+  <!-- 导航栏 -->
   <view class="navbar">
     <view class="back-btn" bindtap="goBack">
       <text class="back-icon">←</text>
@@ -11,29 +10,84 @@
     </view>
   </view>
 
-  <!-- 内容区域（占满剩余屏幕，解决空白问题） -->
+  <!-- 查看方式选项卡 - 顶部显示 -->
+  <view class="tab-container">
+    <view 
+      class="tab-item {{isOnlineViewing ? 'tab-active' : ''}}"
+      bindtap="switchToOnline"
+    >
+      在线预览
+    </view>
+    <view 
+      class="tab-item {{!isOnlineViewing ? 'tab-active' : ''}}"
+      bindtap="switchToDownload"
+    >
+      下载查看
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
   <view class="content">
-    <!-- 加载状态 -->
-    <view class="loading-state" wx:if="{{loading && !showProgress && !error}}">
-      <view class="spinner"></view>
-      <text class="loading-text">正在加载报告...</text>
-    </view>
-
-    <!-- 下载进度 -->
-    <view class="progress-state" wx:if="{{showProgress && !error}}">
-      <text class="progress-text">加载进度：{{progress || 0}}%</text>
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{progress || 0}}"></view>
+    <!-- 在线预览区域 -->
+    <view class="online-viewer" wx:if="{{isOnlineViewing}}">
+      <!-- 加载状态 -->
+      <view class="loading-state" wx:if="{{loading && !error}}">
+        <view class="spinner"></view>
+        <text class="loading-text">正在加载报告...</text>
       </view>
-      <text class="progress-hint">请稍候，报告加载中...</text>
+
+      <!-- 在线预览web-view -->
+      <web-view 
+        src="{{pdfUrl}}" 
+        binderror="onWebViewError"
+        wx:if="{{!loading && !error}}"
+        class="webview-content"
+      ></web-view>
+
+      <!-- 错误状态 -->
+      <view class="error-state" wx:if="{{error}}">
+        <view class="error-icon">!</view>
+        <text class="error-text">{{errorMsg || '加载失败，请重试'}}</text>
+        <button class="retry-btn" bindtap="reloadOnline">重新加载</button>
+      </view>
     </view>
 
-    <!-- 错误状态 -->
-    <view class="error-state" wx:if="{{error}}">
-      <view class="error-icon">!</view>
-      <text class="error-text">{{errorMsg || '加载失败，请重试'}}</text>
-      <button class="retry-btn" bindtap="reloadReport">重新加载</button>
+    <!-- 下载查看区域 -->
+    <view class="download-viewer" wx:if="{{!isOnlineViewing}}">
+      <!-- 初始状态 -->
+      <view class="download-initial" wx:if="{{!showProgress && !tempFilePath && !error}}">
+        <image src="/images/icon_download.png" class="download-icon"></image>
+        <text class="download-desc">点击下方按钮下载报告，下载后可本地查看</text>
+        <button class="download-btn" bindtap="startDownload">
+          开始下载报告
+        </button>
+      </view>
+
+      <!-- 下载进度 -->
+      <view class="progress-state" wx:if="{{showProgress && !error}}">
+        <text class="progress-text">下载进度：{{progress || 0}}%</text>
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{progress || 0}}"></view>
+        </view>
+        <text class="progress-hint">请稍候，报告下载中...</text>
+      </view>
+
+      <!-- 下载完成 -->
+      <view class="download-complete" wx:if="{{tempFilePath && !error}}">
+        <image src="/images/icon_success.png" class="complete-icon"></image>
+        <text class="complete-text">报告已下载完成</text>
+        <button class="open-btn" bindtap="openDownloadedFile">
+          打开报告
+        </button>
+        <text class="file-info">文件将保存在本地缓存中</text>
+      </view>
+
+      <!-- 下载错误 -->
+      <view class="error-state" wx:if="{{error}}">
+        <view class="error-icon">!</view>
+        <text class="error-text">{{errorMsg || '下载失败，请重试'}}</text>
+        <button class="retry-btn" bindtap="retryDownload">重新下载</button>
+      </view>
     </view>
   </view>
 </view>
-    

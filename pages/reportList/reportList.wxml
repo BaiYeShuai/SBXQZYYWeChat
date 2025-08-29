@@ -112,20 +112,15 @@
       </view>
       <view class="report-type">
         <view class="type-tag {{item.Type === 'physical' ? 'type-physical' : item.Type === 'test' ? 'type-test' : item.Type === 'imaging' ? 'type-imaging' : 'type-consultation'}}">
-          {{item.Type === 'physical' ? '体检报告' : item.Type === 'test' ? '检验报告' : item.Type === 'imaging' ? '影像报告' : '会诊报告'}}
+          {{'体检报告'}}
         </view>
-        <view class="report-hospital">{{item.Hospital || '未知医院'}}</view>
+        <view class="report-hospital">{{'沈阳市沈北新区中医院'}}</view>
       </view>
       <view class="report-footer">
         <text class="report-status">已完成</text>
         <image src="/images/icon_arrow_right.png" class="report-arrow"></image>
       </view>
     </view>
-  </view>
-
-  <!-- 下拉刷新提示 -->
-  <view class="refresh-tip" wx:if="{{!loading && filteredReports.length > 0}}">
-    下拉可刷新报告列表
   </view>
 </view>
     

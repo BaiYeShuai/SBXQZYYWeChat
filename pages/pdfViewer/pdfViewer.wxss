@@ -1,87 +1,214 @@
-/* pages/pdfViewer/pdfViewer.wxss */
-.pdf-viewer-container {
-  width: 100%;
-  min-height: 100vh;
+/* 页面容器 */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background-color: #f5f5f5;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* 顶部导航 */
+/* 导航栏 */
 .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 100rpx;
   background-color: #1677ff;
-  padding: 0 30rpx;
   color: white;
+  padding: 0 30rpx;
+  box-sizing: border-box;
 }
 
-.back-btn, .menu-btn {
-  width: 80rpx;
+.back-btn {
+  width: 60rpx;
   height: 100rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.back-text, .menu-text {
-  color: white;
+.back-icon {
   font-size: 36rpx;
   font-weight: bold;
 }
 
-.title {
-  font-size: 32rpx;
+.navbar-title {
+  font-size: 34rpx;
   font-weight: 500;
 }
 
-/* 加载状态 */
-.loading {
+.menu-btn {
+  width: 60rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon {
+  font-size: 36rpx;
+}
+
+/* 选项卡容器 */
+.tab-container {
+  display: flex;
+  flex-direction: row;
+  height: 90rpx;
+  background-color: white;
+  border-bottom: 1px solid #eee;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #666;
+  position: relative;
+}
+
+.tab-active {
+  color: #1677ff;
+  font-weight: 500;
+}
+
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4rpx;
+  background-color: #1677ff;
+}
+
+/* 内容区域 */
+.content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 在线预览区域 */
+.online-viewer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.webview-content {
+  width: 100%;
+  height: 100%;
+}
+
+/* 下载查看区域 */
+.download-viewer {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 100rpx 0;
+  padding: 60rpx 30rpx;
+  box-sizing: border-box;
 }
 
-.custom-loading {
-  width: 50rpx;
-  height: 50rpx;
-  border: 5rpx solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 30rpx;
+.download-initial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.download-icon {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.7;
 }
 
-.loading text {
+.download-desc {
   font-size: 28rpx;
   color: #666;
+  margin-bottom: 60rpx;
+  line-height: 1.6;
+  max-width: 500rpx;
 }
 
-/* 进度条样式（关键新增） */
-.progress-container {
-  padding: 150rpx 30rpx 0;
+.download-btn {
+  width: 100%;
+  max-width: 500rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+  background-color: #1677ff;
+  color: white;
+  border-radius: 15rpx;
+  font-size: 32rpx;
+}
+
+/* 下载完成区域 */
+.download-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.complete-icon {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 40rpx;
+}
+
+.complete-text {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 60rpx;
+  font-weight: 500;
+}
+
+.open-btn {
+  width: 100%;
+  max-width: 500rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+  background-color: #00c853;
+  color: white;
+  border-radius: 15rpx;
+  font-size: 32rpx;
+  margin-bottom: 20rpx;
+}
+
+.file-info {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 进度状态 */
+.progress-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 500rpx;
 }
 
 .progress-text {
-  display: block;
-  text-align: center;
   font-size: 28rpx;
-  color: #666;
+  color: #333;
   margin-bottom: 20rpx;
 }
 
 .progress-bar {
-  height: 12rpx;
+  width: 100%;
+  height: 16rpx;
   background-color: #eee;
-  border-radius: 6rpx;
+  border-radius: 8rpx;
   overflow: hidden;
+  margin-bottom: 20rpx;
 }
 
 .progress-fill {
@@ -91,11 +218,43 @@
 }
 
 .progress-hint {
-  display: block;
-  text-align: center;
   font-size: 24rpx;
-  color: #999;
-  margin-top: 15rpx;
+  color: #666;
+  text-align: center;
+}
+
+/* 加载状态 */
+.loading-state {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid rgba(22, 119, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #1677ff;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 20rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* 错误状态 */
@@ -104,7 +263,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 100rpx 30rpx;
+  padding: 60rpx 30rpx;
   text-align: center;
 }
 
@@ -114,28 +273,28 @@
   border-radius: 50%;
   background-color: #ff4d4f;
   color: white;
+  font-size: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40rpx;
-  font-weight: bold;
   margin-bottom: 30rpx;
 }
 
-.error-msg {
+.error-text {
   font-size: 28rpx;
-  color: #666;
+  color: #ff4d4f;
   margin-bottom: 40rpx;
-  line-height: 1.5;
+  max-width: 500rpx;
+  line-height: 1.6;
 }
 
 .retry-btn {
-  width: 240rpx;
-  height: 80rpx;
-  line-height: 80rpx;
+  width: 100%;
+  max-width: 500rpx;
+  height: 100rpx;
+  line-height: 100rpx;
   background-color: #1677ff;
   color: white;
-  border: none;
-  border-radius: 10rpx;
-  font-size: 28rpx;
+  border-radius: 15rpx;
+  font-size: 32rpx;
 }
