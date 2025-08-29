@@ -1,22 +1,13 @@
+// pages/pdfViewer/pdfViewer.js
 const app = getApp();
 
 Page({
   data: {
-    // 状态管理
-    loading: true,
-    error: false,
-    errorMsg: '',
     pdfUrl: '',
     reportId: '',
-    tempFilePath: '', // 下载后的临时路径
-    
-    // 进度提示
-    progress: 0,
-    showProgress: false,
-    
-    // 预览模式 - 默认在线预览
-    isOnlineViewing: true,
-    timeoutTimer: null
+    tempFilePath: '', // 临时文件路径
+    error: false,
+    errorMsg: ''
   },
 
   onLoad(options) {
@@ -28,10 +19,11 @@ Page({
     }
 
     try {
+      // 获取报告URL和ID
       const pdfUrl = decodeURIComponent(options.url || '');
       const reportId = options.id || '';
       
-      if (!pdfUrl) throw new Error('报告地址为空');
+      if (!pdfUrl) throw new Error('报告地址无效');
 
       // 处理URL协议
       let validUrl = pdfUrl;
@@ -39,233 +31,123 @@ Page({
         validUrl = 'https://' + validUrl;
       }
 
-      this.setData({ 
-        pdfUrl: validUrl, 
-        reportId,
-        loading: false  // 加载完成，直接进入在线预览
-      });
+      this.setData({ pdfUrl: validUrl, reportId });
+      
+      // 直接开始预览
+      this.startDirectPreview();
     } catch (err) {
       console.error('初始化失败:', err);
       this.setData({
-        loading: false,
         error: true,
-        errorMsg: '报告地址无效，请返回'
+        errorMsg: err.message || '无法加载报告'
       });
     }
   },
 
-  // 切换到在线预览
-  switchToOnline() {
-    this.setData({
-      isOnlineViewing: true,
-      error: false,
-      loading: false
-    });
-  },
-
-  // 切换到下载查看
-  switchToDownload() {
-    this.setData({
-      isOnlineViewing: false,
-      error: false
-    });
-  },
-
-  // 重新加载在线预览
-  reloadOnline() {
-    this.setData({
-      error: false,
-      loading: true
-    }, () => {
-      // 简单延迟后重新加载web-view
-      setTimeout(() => {
-        this.setData({ loading: false });
-      }, 500);
-    });
-  },
-
-  // 开始下载
-  startDownload() {
-    this.setData({
-      showProgress: true,
-      progress: 0,
-      error: false,
-      tempFilePath: ''
-    });
-
+  // 直接预览报告
+  startDirectPreview() {
     const { pdfUrl } = this.data;
+    
+    // 设置请求头（如需要认证）
     const header = app.globalData.loginInfo?.token ? {
       'Authorization': `Bearer ${app.globalData.loginInfo.token}`
     } : {};
 
-    // 开始下载（带认证信息）
+    // 显示加载提示
+    wx.showLoading({
+      title: '加载报告中...',
+      mask: true
+    });
+
+    // 下载文件并预览
     const downloadTask = wx.downloadFile({
       url: pdfUrl,
       header: header,
-      timeout: 60000, // 延长超时到60秒
+      timeout: 60000,
       success: (res) => {
-        this.setData({ showProgress: false });
+        wx.hideLoading();
         
         if (res.statusCode === 200) {
-          // 下载成功
+          // 保存临时文件路径
           this.setData({ tempFilePath: res.tempFilePath });
-          wx.showToast({ title: '下载完成', icon: 'success' });
+          
+          // 打开文档预览
+          this.openDocument(res.tempFilePath);
         } else {
-          this.handleError(`下载失败（状态码：${res.statusCode}）`);
+          this.handleError(`加载失败（状态码：${res.statusCode}）`);
         }
       },
       fail: (err) => {
-        this.setData({ showProgress: false });
+        wx.hideLoading();
         console.error('下载失败:', err);
         
-        // 详细错误分类
+        // 错误分类提示
         if (err.errMsg.includes('timeout')) {
-          this.handleError('下载超时，请检查网络后重试');
+          this.handleError('加载超时，请检查网络');
         } else if (err.errMsg.includes('fail')) {
           this.handleError('网络错误，无法连接到服务器');
         } else {
-          this.handleError('下载失败，请稍后重试');
+          this.handleError('加载失败，请稍后重试');
         }
       }
     });
 
-    // 监听下载进度
+    // 显示下载进度
     downloadTask.onProgressUpdate((res) => {
-      this.setData({ progress: res.progress });
-      // 超过30秒但有进度，延长等待时间
       if (res.progress > 0 && res.progress < 100) {
-        this.extendTimeout();
+        wx.showLoading({
+          title: `加载中...${res.progress}%`,
+          mask: true
+        });
       }
     });
-
-    // 初始超时控制
-    this.initTimeout();
   },
 
-  // 重试下载
-  retryDownload() {
-    this.startDownload();
-  },
-
-  // 打开已下载的文件
-  openDownloadedFile() {
-    const { tempFilePath } = this.data;
-    if (!tempFilePath) return;
-
+  // 打开文档
+  openDocument(filePath) {
     wx.openDocument({
-      filePath: tempFilePath,
+      filePath: filePath,
       fileType: 'pdf',
-      showMenu: true, // 支持保存、分享等功能
+      showMenu: true,
       success: () => {
-        console.log('PDF打开成功');
+        console.log('文档打开成功');
+        // 文档关闭后返回上一页
+        setTimeout(() => {
+          this.goBack();
+        }, 500);
       },
       fail: (err) => {
-        console.error('打开PDF失败:', err);
-        this.handleError('无法打开报告，请尝试重新下载');
+        console.error('打开文档失败:', err);
+        this.handleError('无法打开报告，请重试');
       }
     });
   },
 
-  // WebView错误处理
-  onWebViewError(e) {
-    console.error('在线预览错误:', e.detail);
-    this.setData({
-      error: true,
-      errorMsg: '在线预览失败，请尝试下载查看',
-      loading: false
-    });
-  },
-
-  // 初始化超时计时器
-  initTimeout() {
-    if (this.timeoutTimer) clearTimeout(this.timeoutTimer);
-    
-    this.timeoutTimer = setTimeout(() => {
-      // 如果有进度则不超时，否则判定为超时
-      if (this.data.progress === 0) {
-        wx.showToast({ title: '下载缓慢，正在努力...', icon: 'none' });
-        // 再延长30秒超时
-        this.extendTimeout(30000);
-      }
-    }, 30000);
-  },
-
-  // 延长超时时间
-  extendTimeout(ms = 30000) {
-    if (this.timeoutTimer) clearTimeout(this.timeoutTimer);
-    this.timeoutTimer = setTimeout(() => {
-      this.handleError('下载超时，请重试');
-    }, ms);
-  },
-
-  // 错误处理
+  // 处理错误
   handleError(message) {
-    if (this.timeoutTimer) clearTimeout(this.timeoutTimer);
-    
     this.setData({
-      loading: false,
       error: true,
-      errorMsg: message,
-      showProgress: false
+      errorMsg: message
     });
   },
 
-  // 返回列表
+  // 重试预览
+  retryPreview() {
+    this.setData({ error: false, errorMsg: '' });
+    this.startDirectPreview();
+  },
+
+  // 返回上一页
   goBack() {
-    if (this.timeoutTimer) clearTimeout(this.timeoutTimer);
-    wx.navigateBack();
+    wx.navigateBack({
+      delta: 1
+    });
   },
 
-  // 显示菜单
-  showMenu() {
-    const { pdfUrl, tempFilePath } = this.data;
-    
-    // 菜单选项
-    const menuItems = [];
-    
-    // 添加在线预览选项（如果当前不是在线预览）
-    if (!this.data.isOnlineViewing) {
-      menuItems.push({
-        itemList: ['切换到在线预览'],
-        success: () => {
-          this.switchToOnline();
-        }
-      });
-    }
-    
-    // 添加下载选项（如果当前不是下载模式或未下载）
-    if (this.data.isOnlineViewing || !tempFilePath) {
-      menuItems.push({
-        itemList: ['下载报告'],
-        success: () => {
-          this.switchToDownload();
-          if (!tempFilePath) {
-            this.startDownload();
-          }
-        }
-      });
-    } else {
-      // 已下载，添加打开选项
-      menuItems.push({
-        itemList: ['打开已下载报告'],
-        success: () => {
-          this.openDownloadedFile();
-        }
-      });
-    }
-    
-    // 显示菜单
-    if (menuItems.length > 0) {
-      wx.showActionSheet(menuItems[0]);
-    }
-  },
-
-  // 页面卸载清理
+  // 页面卸载时不需要处理临时文件，微信会自动清理
   onUnload() {
-    if (this.timeoutTimer) clearTimeout(this.timeoutTimer);
-    // 清理临时文件
-    if (this.data.tempFilePath) {
-      wx.removeSavedFile({ filePath: this.data.tempFilePath, fail: () => {} });
-    }
+    // 移除临时文件清理代码，避免报错
+    console.log('页面关闭，临时文件将由微信自动管理');
   }
 });
+    
