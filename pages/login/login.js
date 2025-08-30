@@ -1,3 +1,4 @@
+// pages/login/login.js
 const app = getApp();
 
 Page({
@@ -7,7 +8,7 @@ Page({
     phoneNumber: '',   // 手机号
     verifyCode: '',    // 验证码
     
-    // 按钮状态 - 初始设置为false
+    // 按钮状态
     canGetCode: false, // 是否可以获取验证码
     canLogin: false,   // 是否可以登录
     codeText: '获取验证码', // 验证码按钮文本
@@ -20,19 +21,17 @@ Page({
     isLoading: false   // 登录是否加载中
   },
 
-  // 监听输入变化 - 确保每次输入都触发验证
+  // 监听输入变化
   onInputChange(e) {
     const { field } = e.currentTarget.dataset;
-    // 实时更新输入值
     this.setData({
       [field]: e.detail.value
     }, () => {
-      // 输入完成后立即检查表单有效性
       this.checkFormValidity();
     });
   },
 
-  // 检查表单有效性 - 修复核心验证逻辑
+  // 检查表单有效性
   checkFormValidity() {
     const { idCard, phoneNumber, verifyCode } = this.data;
     
@@ -45,7 +44,7 @@ Page({
     // 验证验证码 (严格验证6位数字)
     const isCodeValid = /^\d{6}$/.test(verifyCode);
     
-    // 强制更新按钮状态 - 关键修复
+    // 更新按钮状态
     this.setData({
       canGetCode: isIdCardValid && isPhoneValid,
       canLogin: isIdCardValid && isPhoneValid && isCodeValid,
@@ -55,14 +54,12 @@ Page({
 
   // 获取验证码
   getVerifyCode() {
-    // 双重检查，防止意外点击
     if (!this.data.canGetCode || this.data.isCodeLoading) {
       return;
     }
 
     const { phoneNumber } = this.data;
     
-    // 显示加载状态
     this.setData({ isCodeLoading: true, codeText: '发送中...' });
     
     // 调用后端获取验证码接口
@@ -70,12 +67,12 @@ Page({
       url: `${app.globalData.baseApiUrl}/verification/sendcode`,
       method: 'POST',
       data: {
-        PhoneNumber: phoneNumber  // 确保参数名正确
+        PhoneNumber: phoneNumber
       },
       success: (res) => {
         if (res.data && res.data.Success) {
           wx.showToast({ title: '验证码已发送', icon: 'none' });
-          this.startCountdown();  // 开始倒计时
+          this.startCountdown();
         } else {
           this.setData({
             errorTips: res.data?.Message || '获取验证码失败，请重试',
@@ -107,7 +104,6 @@ Page({
         clearInterval(timer);
         this.setData({ 
           codeText: '获取验证码',
-          // 倒计时结束后重新检查状态，确保按钮可用
           canGetCode: /(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(this.data.idCard) && 
                       /^1[3-9]\d{9}$/.test(this.data.phoneNumber)
         });
@@ -117,46 +113,52 @@ Page({
     }, 1000);
   },
 
-  // 登录 - 恢复原始逻辑，从login接口获取报告数据
+  // 登录
   login() {
-    // 双重检查，防止意外点击
     if (!this.data.canLogin || this.data.isLoading) {
       return;
     }
 
     const { idCard, phoneNumber, verifyCode } = this.data;
     
-    // 显示加载状态
     this.setData({ isLoading: true, errorTips: '' });
     wx.showLoading({ title: '登录中...', mask: true });
     
-    // 调用登录接口 - 登录成功后直接返回报告数据
+    // 调用登录接口
     wx.request({
       url: `${app.globalData.baseApiUrl}/verification/verify`,
       method: 'POST',
       data: {
         IdCard: idCard,
-        PhoneNumber: phoneNumber,  // 确保参数名正确
+        PhoneNumber: phoneNumber,
         Code: verifyCode
       },
       success: (res) => {
         if (res.data && res.data.Success) {
-          // 登录成功，保存登录信息和报告数据
+          // 登录成功，保存登录信息
           app.globalData.isLogin = true;
-          app.globalData.loginInfo = res.data.Data;
+          app.globalData.loginInfo = res.data.Data || {};
           
-          // 从登录接口返回数据中获取报告列表
-          const reports = res.data.Reports || [];
+          // 获取报告列表
+          const reports = res.data.Reports ? this.validateArray(res.data.Reports) : [];
           
-          // 跳转到报告列表页并传递报告数据
           wx.hideLoading();
           this.setData({ isLoading: false });
           
           wx.navigateTo({
             url: '/pages/reportList/reportList',
             events: {},
-            success: (res) => {
-              res.eventChannel.emit('acceptReports', { reports });
+            success: (navRes) => {
+              if (navRes.eventChannel) {
+                navRes.eventChannel.emit('acceptReports', { reports });
+              } else {
+                // 降级方案：使用globalData传递
+                app.globalData.tempReports = reports;
+              }
+            },
+            fail: (err) => {
+              console.error('跳转报告列表失败:', err);
+              wx.showToast({ title: '登录成功，但跳转失败', icon: 'none' });
             }
           });
         } else {
@@ -167,26 +169,30 @@ Page({
           });
         }
       },
-      // 找到登录失败的fail回调，修改为：
-fail: (err) => {
-  console.error('登录失败:', err);
-  
-  // 针对连接错误的具体提示
-  let errorMsg = '网络错误，登录失败';
-  if (err.errMsg.includes('ERR_CONNECTION_REFUSED')) {
-    errorMsg = '无法连接到服务器，请检查网络或服务器地址';
-  } else if (err.errMsg.includes('timeout')) {
-    errorMsg = '连接超时，请稍后重试';
-  } else if (err.errMsg.includes('network')) {
-    errorMsg = '网络未连接，请检查网络设置';
-  }
-  
-  wx.hideLoading();
-  this.setData({
-    errorTips: errorMsg,
-    isLoading: false
-  });
-}
+      fail: (err) => {
+        console.error('登录失败:', err);
+        
+        let errorMsg = '网络错误，登录失败';
+        if (err.errMsg.includes('ERR_CONNECTION_REFUSED')) {
+          errorMsg = '无法连接到服务器，请检查网络';
+        } else if (err.errMsg.includes('timeout')) {
+          errorMsg = '连接超时，请稍后重试';
+        } else if (err.errMsg.includes('network')) {
+          errorMsg = '网络未连接，请检查网络设置';
+        }
+        
+        wx.hideLoading();
+        this.setData({
+          errorTips: errorMsg,
+          isLoading: false
+        });
+      }
     });
+  },
+
+  // 验证数组工具函数
+  validateArray(data) {
+    if (data === null || data === undefined) return [];
+    return Array.isArray(data) ? data : [];
   }
 });

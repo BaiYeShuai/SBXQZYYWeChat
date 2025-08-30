@@ -30,15 +30,51 @@ Page({
       return;
     }
 
-    // 接收初始报告数据
-    const eventChannel = this.getOpenerEventChannel();
-    eventChannel.on('acceptReports', (data) => {
-      const reports = data.reports || [];
-      this.processReports(reports);
-    });
+    // 接收初始报告数据 - 加固版
+    this.receiveReportData();
 
     // 监听全局刷新事件
     this.watchRefreshEvent();
+  },
+
+  // 接收报告数据的统一方法，增加多重保障
+  receiveReportData() {
+    // 方式1：尝试从eventChannel接收数据
+    const eventChannel = this.getOpenerEventChannel();
+    if (eventChannel) {
+      eventChannel.on('acceptReports', (data) => {
+        console.log('从eventChannel接收报告数据:', data);
+        // 严格验证数据类型
+        const validReports = this.validateArray(data?.reports);
+        this.processReports(validReports);
+      });
+    } 
+    // 方式2：降级从globalData接收临时数据
+    else if (app.globalData.tempReports) {
+      console.log('从globalData接收报告数据:', app.globalData.tempReports);
+      const validReports = this.validateArray(app.globalData.tempReports);
+      this.processReports(validReports);
+      // 清空临时数据，避免重复使用
+      app.globalData.tempReports = null;
+    }
+    // 方式3：如果都没有数据，尝试主动刷新
+    else {
+      console.log('未接收到初始报告数据，尝试主动刷新');
+      this.refreshReports();
+    }
+  },
+
+  // 核心工具函数：确保返回值一定是数组
+  validateArray(data) {
+    if (data === null || data === undefined) {
+      console.warn('数据为null/undefined，已转为空数组');
+      return [];
+    }
+    if (!Array.isArray(data)) {
+      console.warn('数据不是数组，已转为空数组', data);
+      return [];
+    }
+    return data;
   },
 
   onShow() {
@@ -62,9 +98,18 @@ Page({
 
   // 处理报告数据 - 修复可能的字段名不匹配问题
   processReports(reports) {
+    // 确保输入是数组
+    if (!Array.isArray(reports)) {
+      console.warn('处理报告数据时发现非数组数据，已自动修正');
+      reports = [];
+    }
+
     // 过滤有效报告（带HTTP/HTTPS地址）
     // 同时处理可能的字段名大小写问题
     const validReports = reports.filter(item => {
+      // 确保item是对象
+      if (!item || typeof item !== 'object') return false;
+      
       // 尝试多种可能的URL字段名
       const url = item.Url || item.url || item.reportUrl || '';
       return url && (url.startsWith('http://') || url.startsWith('https://'));
@@ -110,10 +155,7 @@ Page({
   refreshReports() {
     if (!app.globalData.networkConnected) {
       wx.showToast({ title: '网络未连接，无法刷新', icon: 'none' });
-      if (this.data.refreshing) {
-        wx.stopPullDownRefresh();
-        this.setData({ refreshing: false });
-      }
+      this.handleRefreshComplete();
       return;
     }
 
@@ -128,33 +170,38 @@ Page({
       url: `${app.globalData.baseApiUrl}/reports/latest`,
       method: 'GET',
       header: {
-        'Authorization': `Bearer ${app.globalData.loginInfo.token}`
+        'Authorization': `Bearer ${app.globalData.loginInfo?.token || ''}`
       },
       success: (res) => {
         if (res.data && res.data.Success) {
-          this.processReports(res.data.Data || []);
+          const newReports = this.validateArray(res.data.Data);
+          this.processReports(newReports);
           wx.showToast({ title: '刷新成功', icon: 'none' });
         } else {
           app.handleError(res.data || {}, '刷新失败');
+          this.processReports([]);
         }
       },
       fail: (err) => {
         app.handleError(err, '刷新失败');
+        this.processReports([]);
       },
       complete: () => {
-        this.setData({ 
-          refreshing: false,
-          loading: false 
-        });
-        wx.stopPullDownRefresh();
+        this.handleRefreshComplete();
       }
     });
+  },
+
+  handleRefreshComplete() {
+    this.setData({ refreshing: false, loading: false });
+    wx.stopPullDownRefresh();
   },
 
   // 应用筛选条件
   applyFilters() {
     const { reports, searchKeyword, timeFilter, typeFilter } = this.data;
-    let result = [...reports];
+    // 确保数据源是数组
+    let result = [...this.validateArray(reports)];
 
     // 搜索筛选
     if (searchKeyword) {
@@ -200,7 +247,7 @@ Page({
     const isFilterApplied = searchKeyword || timeFilter !== 'all' || typeFilter !== 'all';
     
     this.setData({
-      filteredReports: result,
+      filteredReports: result, // result必然是数组
       isEmpty: reports.length === 0,
       isFilterApplied
     });
@@ -307,7 +354,7 @@ Page({
     });
   },
 
-  // 查看报告详情 - 修复地址无效问题
+  // 查看报告详情
   viewReport(e) {
     // 获取报告数据
     const { url, id } = e.currentTarget.dataset;
@@ -339,9 +386,22 @@ Page({
     }
   },
 
-  // 返回登录页重新查询
+  // 返回登录页重新查询 - 核心修改：返回原登录页并清除登录状态
   goBack() {
-    wx.navigateTo({ url: '/pages/login/login' });
+    // 1. 清除登录状态
+    app.globalData.isLogin = false;
+    app.globalData.loginInfo = null;
+    app.globalData.tempReports = null; // 清除临时报告数据
+    wx.removeStorageSync('loginInfo'); // 清除本地存储
+    
+    // 2. 尝试返回之前的登录页面（页面栈中的上一页）
+    wx.navigateBack({
+      delta: 1, // 返回一层
+      fail: () => {
+        // 如果返回失败（登录页不在页面栈中），则重定向到登录页
+        wx.redirectTo({ url: '/pages/login/login' });
+      }
+    });
   },
 
   // 退出登录
