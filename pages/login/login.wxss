@@ -127,7 +127,7 @@
 }
 
 .get-code-btn {
-  width: 220rpx;
+  width: 250rpx;
   height: 90rpx;
   background-color: #f0f7ff;
   color: #1677ff;

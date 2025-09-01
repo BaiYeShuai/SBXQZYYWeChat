@@ -23,7 +23,7 @@
       <text class="input-label">手机号</text>
       <view class="input-wrapper">
         <image src="/images/icon_phone.png" class="input-icon"></image>
-        <input class="input-field" placeholder="请输入手机号" data-field="phoneNumber" value="{{phoneNumber}}" bindinput="onInputChange" type="number" maxlength="11" />
+        <input class="input-field" placeholder="请输入体检预留手机号" data-field="phoneNumber" value="{{phoneNumber}}" bindinput="onInputChange" type="number" maxlength="11" />
       </view>
     </view>
 
@@ -56,7 +56,7 @@
       <view class="tips-title">温馨提示：</view>
       <view class="tips-content">
         <view class="tips-item">1、体检报告完成时间：体检结束后10个工作日（节假日除外)。</view>
-        <view class="tips-item">2、请您在上方的查询区域中，先输入您的身份证号，再点击查询（放大镜）进行查询。</view>
+        <view class="tips-item">2、请您在上方查询区域中  输入您的身份证号码  体检登记时预留的手机号码(接收短信验证码)填写短信验证码进行查询（为保证数据安全证件号码及验证码不可泄露给其他人否则后果自负）</view>
         <view class="tips-item">3、在遇到输入的查询信息有误或体检报告暂时未发布时，系统会自动弹出提示信息。</view>
         <view class="tips-item">4、在阅读体检报告内容时，请您首先观看体检报告中的阅读说明，其中有对影响体检结果因素和对异常指标解读的内容。</view>
         <view class="tips-item">5、若您对查询结果或体检报告内容有疑问，请拨打下方的医院联系电话进行咨询。</view>
