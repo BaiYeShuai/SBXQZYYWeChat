@@ -14,7 +14,7 @@ App({
   globalData: {
     isLogin: false,
     loginInfo: null,
-    baseApiUrl: 'http://120.46.192.145:806/api', // 替换为实际API地址
+    baseApiUrl: 'aHR0cHM6Ly93d3cuc2J6eXkyMDIyLmNvbS9XZUNoYXRWZXJpZmljYXRpb25BUEkvYXBp', // 替换为实际API地址
     networkConnected: true,
     needRefreshReports: false
   },

@@ -1,4 +1,3 @@
-// pages/login/login.js
 const app = getApp();
 
 Page({
@@ -19,6 +18,40 @@ Page({
     
     // 加载状态
     isLoading: false   // 登录是否加载中
+  },
+
+  // Base64解码函数，替代atob（兼容真机环境）
+  base64Decode(str) {
+    const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+    let chr1, chr2, chr3;
+    let enc1, enc2, enc3, enc4;
+    let i = 0;
+
+    // 清除非Base64字符
+    str = str.replace(/[^A-Za-z0-9+/=]/g, '');
+
+    while (i < str.length) {
+      enc1 = base64Chars.indexOf(str.charAt(i++));
+      enc2 = base64Chars.indexOf(str.charAt(i++));
+      enc3 = base64Chars.indexOf(str.charAt(i++));
+      enc4 = base64Chars.indexOf(str.charAt(i++));
+
+      chr1 = (enc1 << 2) | (enc2 >> 4);
+      chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+      chr3 = ((enc3 & 3) << 6) | enc4;
+
+      output = output + String.fromCharCode(chr1);
+
+      if (enc3 !== 64) {
+        output = output + String.fromCharCode(chr2);
+      }
+      if (enc4 !== 64) {
+        output = output + String.fromCharCode(chr3);
+      }
+    }
+
+    return output;
   },
 
   // 监听输入变化
@@ -62,9 +95,9 @@ Page({
     
     this.setData({ isCodeLoading: true, codeText: '发送中...' });
     
-    // 调用后端获取验证码接口
+    // 调用后端获取验证码接口（使用自定义的base64Decode替代atob）
     wx.request({
-      url: `${app.globalData.baseApiUrl}/verification/sendcode`,
+      url: `${this.base64Decode(app.globalData.baseApiUrl)}/verification/sendcode`,
       method: 'POST',
       data: {
         PhoneNumber: phoneNumber
@@ -124,9 +157,9 @@ Page({
     this.setData({ isLoading: true, errorTips: '' });
     wx.showLoading({ title: '登录中...', mask: true });
     
-    // 调用登录接口
+    // 调用登录接口（使用自定义的base64Decode替代atob）
     wx.request({
-      url: `${app.globalData.baseApiUrl}/verification/verify`,
+      url: `${this.base64Decode(app.globalData.baseApiUrl)}/verification/verify`,
       method: 'POST',
       data: {
         IdCard: idCard,
