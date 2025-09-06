@@ -108,7 +108,7 @@ Page({
           this.startCountdown();
         } else {
           this.setData({
-            errorTips: res.data?.Message || '获取验证码失败，请重试',
+            errorTips: res.data?.Msg || '获取验证码失败，请重试',
             codeText: '获取验证码'
           });
         }
@@ -197,7 +197,7 @@ Page({
         } else {
           wx.hideLoading();
           this.setData({
-            errorTips: res.data?.Message || '登录失败，请检查信息',
+            errorTips: res.data?.Msg || '登录失败，请检查信息',
             isLoading: false
           });
         }
